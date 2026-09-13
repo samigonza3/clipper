@@ -29,7 +29,8 @@
   </div>
   <div class="topbar-actions">
     <button id="btnChange" class="pill ghost" hidden>Cambiar video</button>
-    <button id="btnAnalyze" class="pill solid" disabled>Buscar momentos</button>
+    <button id="btnAnalyze" class="pill ghost" disabled>Buscar por audio</button>
+    <button id="btnAI" class="pill solid" disabled>Analizar con IA</button>
   </div>
 </header>
 
@@ -66,6 +67,7 @@
             <video id="video" playsinline preload="auto"></video>
             <div id="cropGuide" class="crop-guide" aria-hidden="true"></div>
             <div id="hookOverlay" class="hook-overlay" hidden></div>
+            <div id="capOverlay" class="cap-overlay" hidden></div>
           </div>
         </div>
 
@@ -137,5 +139,6 @@
 <canvas id="render" hidden></canvas>
 
 <script src="app.js"></script>
+<script src="ai.js"></script>
 </body>
 </html>

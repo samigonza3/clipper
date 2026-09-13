@@ -10,6 +10,7 @@ const el = {
   btnPlay: $('btnPlay'), timeNow: $('timeNow'), wave: $('wave'), playhead: $('playhead'),
   clipList: $('clipList'), emptyClips: $('emptyClips'), clipLen: $('clipLen'),
   btnExport: $('btnExport'), btnJSON: $('btnJSON'), btnManual: $('btnManual'),
+  btnAI: $('btnAI'), cap: $('capOverlay'),
   busy: $('busy'), busyText: $('busyText'), busyBar: $('busyBar'),
   render: $('render'), toastHost: $('toastHost')
 };
@@ -17,7 +18,7 @@ const el = {
 const S = {
   file: null, url: null, duration: 0,
   env: null, hop: 0.05,
-  clips: [], sel: null,
+  clips: [], sel: null, segments: null, norm: null,
   ratio: '9:16', pan: 0.5,
   loop: true, recording: false,
   audioCtx: null, srcNode: null, streamDest: null
@@ -76,6 +77,7 @@ function loadFile(file) {
   el.video.src = S.url;
   el.fileLabel.textContent = `${file.name} · ${(file.size / 1048576).toFixed(1)} MB`;
   el.btnAnalyze.disabled = false;
+  el.btnAI.disabled = false;
   el.btnChange.hidden = false;
   el.landing.hidden = true;
   el.editor.hidden = false;
@@ -389,6 +391,10 @@ function updateHead() {
   if (!S.recording && S.loop && c && !el.video.paused && el.video.currentTime >= c.end) {
     seek(c.start);
   }
+  const seg = segmentAt(el.video.currentTime);
+  el.cap.hidden = !seg;
+  if (seg) el.cap.textContent = seg.text;
+
   const p = S.duration ? el.video.currentTime / S.duration : 0;
   el.playhead.style.left = `${p * 100}%`;
   el.timeNow.textContent = c
@@ -397,6 +403,11 @@ function updateHead() {
 }
 
 const current = () => S.clips.find(c => c.id === S.sel) || null;
+
+function segmentAt(t) {
+  if (!S.segments) return null;
+  return S.segments.find(s => t >= s.start && t <= s.end) || null;
+}
 
 /* ---------------- formato y encuadre ---------------- */
 document.querySelectorAll('.chip').forEach(btn => {
@@ -614,6 +625,33 @@ function drawFrame(ctx, w, h, title) {
     wrapText(ctx, title, w / 2, h * 0.07, w * 0.86, size * 1.2);
     ctx.shadowBlur = 0;
   }
+
+  const seg = segmentAt(v.currentTime);
+  if (seg) {
+    const cs = Math.round(w * 0.048);
+    ctx.font = `500 ${cs}px Montserrat, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.shadowColor = 'rgba(0,0,0,.9)';
+    ctx.shadowBlur = cs * 0.6;
+    ctx.fillStyle = '#fff';
+    wrapBottom(ctx, seg.text, w / 2, h * 0.88, w * 0.86, cs * 1.25);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function wrapBottom(ctx, text, x, y, maxW, lh) {
+  const words = String(text).split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  const keep = lines.slice(-2);
+  keep.forEach((l, i) => ctx.fillText(l, x, y - (keep.length - 1 - i) * lh));
 }
 
 function wrapText(ctx, text, x, y, maxW, lh) {
@@ -645,6 +683,13 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') seek(el.video.currentTime + 2);
   if (e.key === 'ArrowLeft') seek(el.video.currentTime - 2);
 });
+
+window.GC = {
+  S,
+  seek, busy, toast,
+  renderClips, drawWave
+};
+S.seek = seek;
 
 sizeCanvas();
 drawWave();
