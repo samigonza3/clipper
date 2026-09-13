@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>GlassCut · Clips automáticos desde tu video</title>
+<meta name="description" content="Sube un video, detecta sus momentos más fuertes y exporta clips verticales listos para publicar. Todo corre en tu navegador." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+  <span class="grain"></span>
+</div>
+
+<header class="topbar glass">
+  <div class="brand">
+    <span class="lens" aria-hidden="true"></span>
+    <div class="brand-text">
+      <strong>GlassCut</strong>
+      <span id="fileLabel">Ningún video cargado</span>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnChange" class="pill ghost" hidden>Cambiar video</button>
+    <button id="btnAnalyze" class="pill solid" disabled>Buscar momentos</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ESTADO 1: carga -->
+  <section id="landing" class="stage">
+    <div id="drop" class="dropzone glass" tabindex="0" role="button" aria-label="Elegir un video para clipear">
+      <div class="drop-inner">
+        <div class="drop-lens" aria-hidden="true"></div>
+        <h1>Suelta un video y saca los cortes que valen</h1>
+        <p>El análisis corre completo en tu navegador. Tu archivo nunca sale de tu computador.</p>
+        <span class="pill solid big">Elegir video</span>
+        <small>MP4, MOV o WebM. Recomendado menos de 20 minutos para el prototipo.</small>
+      </div>
+      <input id="fileInput" type="file" accept="video/*" hidden />
+    </div>
+
+    <div class="steps">
+      <div class="step glass-soft"><b>1</b><p>Cargas el video y se lee la pista de audio completa.</p></div>
+      <div class="step glass-soft"><b>2</b><p>Se puntúan las ventanas por energía, contraste y arranque limpio.</p></div>
+      <div class="step glass-soft"><b>3</b><p>Ajustas los bordes, eliges formato y exportas el corte.</p></div>
+    </div>
+  </section>
+
+  <!-- ESTADO 2: editor -->
+  <section id="editor" class="stage" hidden>
+
+    <div class="workspace">
+
+      <div class="panel player-panel glass">
+        <div class="stagewrap">
+          <div id="frame" class="frame" data-ratio="9:16">
+            <video id="video" playsinline preload="auto"></video>
+            <div id="cropGuide" class="crop-guide" aria-hidden="true"></div>
+            <div id="hookOverlay" class="hook-overlay" hidden></div>
+          </div>
+        </div>
+
+        <div class="transport">
+          <button id="btnPlay" class="round" aria-label="Reproducir">▶</button>
+          <span id="timeNow" class="mono">0:00</span>
+          <div class="ratios" role="group" aria-label="Formato de salida">
+            <button class="chip is-on" data-ratio="9:16">9:16</button>
+            <button class="chip" data-ratio="1:1">1:1</button>
+            <button class="chip" data-ratio="16:9">16:9</button>
+          </div>
+          <label class="pan">
+            <span>Encuadre</span>
+            <input id="panX" type="range" min="0" max="100" value="50" />
+          </label>
+        </div>
+
+        <div class="timeline-wrap">
+          <canvas id="wave" height="150"></canvas>
+          <div id="playhead" class="playhead"></div>
+        </div>
+
+        <div class="timeline-tools">
+          <span id="hint" class="hint">Arrastra los bordes del clip seleccionado sobre la onda.</span>
+          <button id="btnManual" class="pill ghost">Añadir clip aquí</button>
+        </div>
+      </div>
+
+      <aside class="panel clips-panel glass">
+        <div class="clips-head">
+          <h2>Clips detectados</h2>
+          <label class="len">
+            <span>Duración</span>
+            <select id="clipLen">
+              <option value="15">15 s</option>
+              <option value="30" selected>30 s</option>
+              <option value="45">45 s</option>
+              <option value="60">60 s</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="clipList" class="clip-list"></div>
+
+        <div id="emptyClips" class="empty">
+          <p>Todavía no hay cortes. Pulsa <b>Buscar momentos</b> y el audio decide por dónde cortar.</p>
+        </div>
+
+        <div class="clips-foot">
+          <button id="btnExport" class="pill solid" disabled>Exportar clip</button>
+          <button id="btnJSON" class="pill ghost" disabled>Bajar marcas</button>
+        </div>
+      </aside>
+
+    </div>
+  </section>
+</main>
+
+<div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+<div id="busy" class="busy" hidden>
+  <div class="busy-card glass">
+    <div class="ripple" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p id="busyText">Leyendo el audio…</p>
+    <div class="bar"><i id="busyBar"></i></div>
+  </div>
+</div>
+
+<canvas id="render" hidden></canvas>
+
+<script src="app.js"></script>
+</body>
+</html>
